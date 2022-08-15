@@ -44,9 +44,7 @@ Cabal directory contains all code and libraries necessary to compile and run it 
                 -> 2         square in forward vertical direction IF it is pawn first move 
                 -> _         special move: Promotion* IF reaches the end of the board
  
- 
- 
-    Special Movements:
+ Special Movements:
         
         (*) Castling: King moves 2 squares in the direction of the Rook which swiches sides with the King. Only possible if fullfils all Castling Rules: 
                               1. King and Rook first move
@@ -60,18 +58,18 @@ Cabal directory contains all code and libraries necessary to compile and run it 
 
 
 
-   Check: When a enemy piece is attacking the King
+ Check: When a enemy piece is attacking the King
 
-       Check Rules:
-            0. King can never move to a square attacked
-            1. Move the King to a square not attacked
-            2. Capture the checking Piece
-            3. Block the check by moving Piece in Between
+     Check Rules:
+          0. King can never move to a square attacked
+          1. Move the King to a square not attacked
+          2. Capture the checking Piece
+          3. Block the check by moving Piece in Between
 
-   Game Over:
-      1. King is captured 
-      2. Player resigns 
-      3. Draw is declared
+ Game Over:
+    1. King is captured 
+    2. Player resigns 
+    3. Draw is declared
 
 
 
