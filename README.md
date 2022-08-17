@@ -2,6 +2,13 @@
 
 Simple chess game written in Haskell
 
+## Build
+$ cabal build Main.hs
+
+## Execute 
+$ dist/build/chess/chess
+
+
 
 # Features
 * Highlights possible moves once piece is selected
