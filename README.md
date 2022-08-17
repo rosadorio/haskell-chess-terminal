@@ -2,20 +2,22 @@
 
 Simple chess game written in Haskell
 
-Cabal directory contains all code and libraries necessary to compile and run it on your terminal
+
+# Features
+* Highlights possible moves once piece is selected
+* Highlights when King is in Check
+* Incluedes chess special moves
 
 
+Chess Game Logic
 
-------  Chess Game Logic-----------------------------------------------------------
-
- 
   Chess Rules:
     8 x 8 Board 
-    2     Players: White and Black. White starts and alternate moves
+    2     Players: White and Black - White starts and alternate moves
     2 * 6 Pieces: King, Queen, Rook, Bishop, Knight, Pawn 
-           Each piece has its own method of movement and capturing
+          Each piece has its own way of moving and capturing
           Pieces can only move to empty squares excepts when capturing
-          Pieces can not jump over other Pieces except any Knight move or Castling*  
+          Pieces can not jump over other Pieces except Knights and when Castling*  
           
 
      Chess Board Initial Configuration:
