@@ -132,7 +132,7 @@ selectMove :: (MonadState WorldState m) => Maybe Pos -> Maybe Pos -> Cursor -> B
 selectMove currSel newSel newcursor board
   | isNothing newSel     = do cursor .= newcursor >> message .= "select piece"
   | currSel == newSel    = do cursor .= newcursor >> message .= "select move"
-  | elem justSel possMov = makemove justSel
+  | elem justSel possMov = makemove justSel --make move if is in possible moves
   | otherwise            = do cursor .= Cursor justSel Nothing [] >> message .= "invalid move"
     where justSel = fromJust newSel
           possMov = getMoves currSel board 

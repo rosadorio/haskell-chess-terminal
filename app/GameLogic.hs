@@ -126,7 +126,7 @@ movePiece from to b
 
 
 
----- helper funcs to handle board ----
+------ Helper Functions -------
 
 -- getPiece: from position get piece
 getPiece :: Pos -> Board -> Either String Piece
@@ -152,12 +152,6 @@ promotePiece :: Piece -> PType -> Piece
 promotePiece (Piece pt c s) newPt = Piece newPt c s
 
 
--- Update PState according to move from a to b
-updatePState :: Pos -> Pos -> Piece -> Piece
-updatePState from to p = if (p^.ptype == Pawn && distance from to == 2) 
-                         then p { _pstate = TwoStep } 
-                         else p { _pstate = Moved }
-
 -- get the other Pcolor
 other :: PColor -> PColor
 other White =  Black
@@ -170,8 +164,14 @@ isEmpty = \myList ->
     _ ->  False -- otherwise, return false
 
 
+
+---- Update PState according to move from to --------------
+updatePState :: Pos -> Pos -> Piece -> Piece
+updatePState from to p = if (p^.ptype == Pawn && distance from to == 2) 
+                         then p { _pstate = TwoStep } 
+                         else p { _pstate = Moved }
                    
--- set pawns in two step state
+----- RESET PAWNS TWO STATE TO MOVED---------------------
 setTwoStepMoved :: PColor -> Board -> Board
 setTwoStepMoved color board =  map f board 
   where f sq = if sq^.piece^.pcolor == color && sq^.piece^.pstate == TwoStep then  
@@ -180,8 +180,7 @@ setTwoStepMoved color board =  map f board
 
 
 
-------------------------------------------
---EnPassant       
+-----------IS ENPASSANT------------------------------------      
 isEnpassant :: Piece -> Pos -> Pos -> Board -> Bool
 isEnpassant p (r0,c0) (r1,c1) b = isPawn p && isValidMv && isEnPawnInRow    
    where 
@@ -195,7 +194,7 @@ isEnpassant p (r0,c0) (r1,c1) b = isPawn p && isValidMv && isEnPawnInRow
 -- didnt check if the space is free but assuming TwoStep is working it should never happen
 
 
---------------------------------------------------------------
+------------IS CASTLING--------------------------------------------------
 isCastling :: Piece -> Pos -> Pos -> Board -> Bool
 isCastling p from to b = _ptype p == King             -- piece King 
                       && _pstate p == Init             -- state Init
@@ -230,7 +229,7 @@ isPathAttacked c from to b = any (\b -> b == True) pathAtt
     where  path = getPath from to ++ [to]        -- include place where king lands
            pathAtt = map (\pos -> isAttacked c pos b) path
            
----------------------------------------------------------
+--------------IS PROMOTION--------------------------------------------
 
 -- Promoted if Pawn moves to the last line
 isPromotion :: Pos -> Pos -> Board -> Bool
@@ -240,16 +239,17 @@ isPromotion from to b =  (piece^.ptype == Pawn)          -- it's a pawn
                     Left m  -> error $ "isPromotion failed "++m
                     Right p -> p 
                     
+                    
 
-----------------------------------------------------------
 
 
+--------------POSSIBLE MOVES------------------------------------------
 -- possibleMoves: from Piece and Position get all possible moves for that piece on the Board
 getPossibleMoves :: Piece -> Pos -> Board -> [Pos] 
 getPossibleMoves p from b = 
-    let allpos = [(x,y) | x <-[0..7], y <- [0..7]] 
+    let allpos  = [(x,y) | x <-[0..7], y <- [0..7]]        
     in filter (\to -> if isSpaceFree to b then 
-                          isEnpassant p from to b
+                         isEnpassant p from to b
                       || isCastling   p from to b
                       || isValidMove p from to 
                       && isPathClear p from to b
@@ -285,59 +285,11 @@ getPath :: Pos -> Pos -> [Pos]
 getPath (x0,y0) (x1,y1) = [ ((x0+i*s), (y0+j*s)) | s <- [1..d-1]] 
   where d = distance (x0,y0) (x1,y1)
         (i,j) = (div (x1-x0) d, div (y1-y0) d)  -- (-1 or 0 or 1)      
-       
-
------------------------------------------------------------
-
-isCheck :: PColor -> Board -> Bool
-isCheck player board = isAttacked player kingPos board
-  where kingPos = getKingPos player board
-
--- from Player color and position 
--- check if that position is attacked
-isAttacked :: PColor -> Pos -> Board -> Bool
-isAttacked player pos b = 
-    let allMvTup     = allPossibleMoves (other player) b
-        allMvLst     = concat $ map (\(_,_,a) -> a ) allMvTup
-    in  elem pos allMvLst
-
--- getPosistion: from piece get position
-getKingPos :: PColor -> Board -> Pos
-getKingPos col b  = _pos king where
-   king = head $ filter (\sq -> (sq^.piece^.ptype == King)  
-                     && (sq^.piece^.pcolor == col)) b   
-
-----------------------------------------------------------
 
 
-
--- input: color, board -> return: isCheckMate Bool 
--- Get all possible moves 
--- Get all possible board outcomes
--- if in all resulting boards the player is incheck then CheckMate = True else False  
-isCheckMate :: PColor -> Board -> Bool
-isCheckMate player board  = all (\b -> b==True) allPossBrdInCheck  
-  where allPossBrdInCheck = map (\b -> isCheck player b) allPossBoard 
-        allPossBoard      = map (\(p,from,to) -> movePiece from to board) allPossMoves
-        allPossMoves      = concat $ map makeMovelist allMovesTupl
-        allMovesTupl      = allPossibleMoves player board
-        
-makeMovelist :: (Piece,Pos,[Pos]) -> [(Piece,Pos,Pos)]
-makeMovelist ( _, _,    [])      = []
-makeMovelist (p,from,(to:txs)) = (p,from,to):makeMovelist (p,from,txs) 
  
-
--- from Color get list of all pieces of that color that are on the board  
--- from list of pieces on the board
--- create tupple with (Piece, [piece possible moves])
-allPossibleMoves :: PColor -> Board -> [(Piece,Pos,[Pos])]
-allPossibleMoves player b = 
-    let allPSqs      = filter (\sq -> sq^.piece^.pcolor == player) b -- list squares with player piece
-        moveLst sq  = getPossibleMoves (sq^.piece) (sq^.pos) b      -- getPossMoves for each 
-    in  map (\sq -> (sq^.piece, sq^.pos ,moveLst sq)) allPSqs       -- make list of moves
-      
  
--------------------------------------------------------------------     
+---------------PIECE VALID MOVEMENTS------------------------------------------     
 
 -- distance between two positions
 distance :: Pos -> Pos -> Int
@@ -378,23 +330,58 @@ isWForward (x0,y0) (x1,y1)  = isVertical (x0,y0) (x1,y1) &&
 isBForward  :: Pos -> Pos -> Bool
 isBForward (x0,y0) (x1,y1)  = isVertical (x0,y0) (x1,y1) &&
                           (x1-x0 == 1 ||(x0 == 1 && x1-x0 == 2))
---------------------------------------------
+---------------------------------------------------------------------
 
---DEBUG
+                    
 
-ws = initGame "me" "you" 3
-b = ws ^. board
-b1 =  movePiece (0,3) (6,3) b
-b2 =  movePiece (7,3) (1,3) b1
-b3 =  movePiece (1,3) (1,2) b2
-b4 =  movePiece (7,2) (4,3) b3
-b5 =  movePiece (7,1) (5,0) b4
-b6 =  movePiece (6,3) (5,4) b5
-b7 =  movePiece (5,4) (5,0) b6
-b8 =  movePiece (5,4) (5,0) b7
+-------------IS CHECK----------------------------------------------
+isCheck :: PColor -> Board -> Bool
+isCheck player board = isAttacked player kingPos board
+  where kingPos = getKingPos player board
+
+-- from Player color and position 
+-- check if that position is attacked
+isAttacked :: PColor -> Pos -> Board -> Bool
+isAttacked player pos b = 
+    let allMvTup     = allPossibleMoves (other player) b
+        allMvLst     = concat $ map (\(_,_,a) -> a ) allMvTup
+    in  elem pos allMvLst
+
+-- getPosistion: from piece get position
+getKingPos :: PColor -> Board -> Pos
+getKingPos col b  = _pos king where
+   king = head $ filter (\sq -> (sq^.piece^.ptype == King)  
+                     && (sq^.piece^.pcolor == col)) b   
+
+-------------CHECK MATE-------------------------------------------
+
+-- input: color, board -> return: isCheckMate Bool 
+-- Get all possible moves 
+-- Get all possible board outcomes
+-- if in all resulting boards the player is incheck then CheckMate = True else False  
+isCheckMate :: PColor -> Board -> Bool
+isCheckMate player board  = all (\b -> b==True) allPossBrdInCheck  
+  where allPossBrdInCheck = map (\b -> isCheck player b) allPossBoard 
+        allPossBoard      = map (\(p,from,to) -> movePiece from to board) allPossMoves
+        allPossMoves      = concat $ map makeMovelist allMovesTupl
+        allMovesTupl      = allPossibleMoves player board
+        
+makeMovelist :: (Piece,Pos,[Pos]) -> [(Piece,Pos,Pos)]
+makeMovelist ( _, _,    [])      = []
+makeMovelist (p,from,(to:txs)) = (p,from,to):makeMovelist (p,from,txs) 
+ 
+
+-- from Color get list of all pieces of that color that are on the board  
+-- from list of pieces on the board
+-- create tupple with (Piece, [piece possible moves])
+allPossibleMoves :: PColor -> Board -> [(Piece,Pos,[Pos])]
+allPossibleMoves player b = 
+    let allPSqs      = filter (\sq -> sq^.piece^.pcolor == player) b -- list squares with player piece
+        moveLst sq  = getPossibleMoves (sq^.piece) (sq^.pos) b      -- getPossMoves for each 
+    in  map (\sq -> (sq^.piece, sq^.pos ,moveLst sq)) allPSqs       -- make list of moves
+      
 
 
-initB = [Square {_pos = (0,4), _piece = Piece {_ptype = King, _pcolor = Black, _pstate = Init}},Square {_pos = (7,4), _piece = Piece {_ptype = King, _pcolor = White, _pstate = Init}},Square {_pos = (0,1), _piece = Piece {_ptype = Queen, _pcolor = White, _pstate = Init}},Square {_pos = (1,1), _piece = Piece {_ptype = Queen, _pcolor = White, _pstate = Init}}]
 
 
 
