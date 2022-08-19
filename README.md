@@ -1,8 +1,32 @@
-# haskell-chess-terminal
+# haskell-chess-terminal-game
 
-Simple chess game written in Haskell
 
-Cabal directory contains all code and libraries necessary to compile and run it on your terminal
+Project developed in the context of *Emurgo's Cardano Developer Associate Programme*. This is my final project of the Haskell Programming module that aims at demonstrating haskell basic profeciency
+
+# Intro - chess terminal game
+
+This is a simple chess terminal game. 
+
+Once the game is running the board is displayed on the terminal and you can use "wasd" to move the cursor to select the pieces and make move. 
+
+It contains all basic chess rules and includes the special moves: Castling, Enpassant and pawn Promotion. Pawns are promoted to Queen by default.
+
+Once a piece is selected it highlights the possible moves. It won't allow you to move a piece if it puts your King in check-mate.
+
+If you are in check your the king will be highlighted and you are only allowed to move to a state where you are not in check. 
+
+When this is not possible a check-mate is declared and the game terminates
+
+
+
+# Getting Started 
+This repo contains all code and libraries necessary to build and run it on your terminal if you have cabal installed
+
+
+1. Clone repo
+2. 
+3. Run: `cabal update && cabal install --only-dependencies`
+4. Run: `cabal run`
 
 
 
