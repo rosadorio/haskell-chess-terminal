@@ -24,7 +24,7 @@ movePos (r,c) 'a' = if (c > 0) then (r,c-1) else (r,c)
 movePos (r,c) 'd' = if (c < 7) then (r,c+1) else (r,c) 
 movePos p     _        = p
 
-
+-- select and un-select piece
 selectPos :: Maybe Pos -> Pos -> Char -> Maybe Pos
 selectPos _  _   '\ESC'  = Nothing
 selectPos _  _   'q'     = Nothing
@@ -37,20 +37,53 @@ getMoves Nothing    _  = []
 getMoves (Just pos) b  = case getPiece pos b of
                             Left m  -> []
                             Right p -> getPossibleMoves p pos b
+                            
+
+-- Update Player state: D -> Draw, R -> Resign, P -> Play
+updatePlayerState :: Player -> Char -> Player
+updatePlayerState (Player n t c st) 'D' = Player n t c Draw
+updatePlayerState (Player n t c st) 'R' = Player n t c Resign
+updatePlayerState (Player n t c st) 'P' = Player n t c Play
+updatePlayerState pl _ = pl
+
+
+-- move game to previous turn
+stepbackBoard :: ( MonadState WorldState m) => m ()
+stepbackBoard = do 
+  player  <- use current
+  hist    <- use history
+  
+  -- first turn
+  if (fst $ head hist) == 0 
+  then return ()
+  else do  
+    let newhist = tail $ hist
+        prevBoard = snd $ head newhist
+    board   .= prevBoard
+    history .= newhist
+    current %= other
 
 
 makeTurn :: (MonadIO m, MonadReader Config m, MonadState WorldState m) => m ()
 makeTurn = do
   game    <- get
   board   <- use board
-  player <- use current
-  
+  player  <- use current
+  pwhite  <- use whitePlayer
+  pblack  <- use blackPlayer
+ 
   liftIO $ showCursor
   liftIO $ hSetEcho stdin False
-  liftIO $ threadDelay (2 * 10 ^ 5)
+  liftIO $ threadDelay (1 * 10 ^ 5)
     
   key <- liftIO getChar -- get input
   
+  -- option to go back to previous turn
+  if key == 'U' 
+  then stepbackBoard
+  else return ()
+  
+    
   let currPos = game^.cursor^.position
       currSel = game^.cursor^.selected
       --
@@ -59,16 +92,21 @@ makeTurn = do
       --
       possMov = getMoves newSel board
       -- default new cursor
-      newcursor = Cursor newPos newSel possMov
+      newcursor = Cursor newPos newSel possMov 
  
-  -- when nothing is selected
-  if isNothing currSel then
-    selectPiece newSel newcursor
-  -- when piece is selected          
-  else 
-    selectMove currSel newSel newcursor board
-    
-    
+  if isNothing currSel 
+  then selectPiece newSel newcursor
+  else selectMove currSel newSel newcursor board   -- when piece is selected          
+
+  
+  -- option to change player state: Play, Draw, Resign
+  if player == game^.whitePlayer^.col
+  then do 
+     let upPl = updatePlayerState (game^.whitePlayer) key
+     whitePlayer .= upPl
+  else do
+    let upPl = updatePlayerState (game^.blackPlayer) key
+    blackPlayer .= upPl
     
 selectPiece :: (MonadState WorldState m) => Maybe Pos -> Cursor -> m ()
 selectPiece newSel newcursor = do
@@ -84,16 +122,15 @@ selectPiece newSel newcursor = do
           Left m  -> message .= "invalid selection! "++m 
                   -- if color of piece matches current turn 
           Right p -> if _pcolor p == player then do
-                        let piece = show(_pcolor p) ++" "++ show(_ptype p) 
                         cursor  .= newcursor
-                        message .= piece ++" selected"
+                        message .= "piece selected"
                      else 
                         message .= "invalid selection! it is "++show(player)++"'s turn"                             
 
 selectMove :: (MonadState WorldState m) => Maybe Pos -> Maybe Pos -> Cursor -> Board -> m ()
 selectMove currSel newSel newcursor board
   | isNothing newSel     = do cursor .= newcursor >> message .= "select piece"
-  | currSel == newSel    = do cursor .= newcursor >> message .= "make move"
+  | currSel == newSel    = do cursor .= newcursor >> message .= "select move"
   | elem justSel possMov = makemove justSel
   | otherwise            = do cursor .= Cursor justSel Nothing [] >> message .= "invalid move"
     where justSel = fromJust newSel
@@ -118,34 +155,28 @@ makemove to = do
   else do
     -- update board (with change Pawns in TwoStep State -> Moved) 
     board  .= setTwoStepMoved (other player) newBoard 
-    cursor .= Cursor to Nothing []  -- reset cursodr
+    cursor .= Cursor to Nothing []  -- reset cursor sel
     current %= other                -- change turn
     history .= ((fst $ head hist) + 1,newBoard):hist
   
-  -- change every current (color) piece state from TwoState -> Moved before changing turn
-      -- did the move put new player in check?
+    -- did the move put new player in check?
     if isCheck (other player) newBoard then
-      --message .= "Atention! "++show(other player)++" is in Check!"
-      if isCheckMate (other player) newBoard then
-         message .= "You are DEAD!"
-      else
-         message .= "Atention! "++show(other player)++" is in Check!"
+      message .= "Atention! "++show(other player)++" is in Check!"
     else
       message .= "" 
-
-
+  
+  
 
 startGame :: IO WorldState
 startGame = do
   clearScreen  
   
-  setSGR [SetColor Background Dull Yellow]
   putStrLn "\n----- Welcome to Haskell Chess Game -----"
   putStrLn ""
   setSGR [SetColor Foreground Vivid System.Console.ANSI.White]
   putStrLn "Enter white player name: "  
   p1name <- getLine
-  setSGR [SetColor Foreground Dull System.Console.ANSI.Black]
+  setSGR [SetColor Foreground Vivid System.Console.ANSI.Black]
   putStrLn "Enter black player name: "  
   p2name <- getLine
   setSGR [Reset]  -- reset to default colour scheme
@@ -172,16 +203,16 @@ play = forever $ do
   game   <- get
   board  <- use board
   player <- use current
+  pwhite <- use whitePlayer
+  pblack <- use blackPlayer
   
-  if isCheckMate player board
+  if isCheckMate player board || pwhite^.stat == Resign || pblack^.stat == Resign
   then do 
+     liftIO $ threadDelay (2 * 10 ^ 6)
      renderGameOver
   else do 
      renderGame
      makeTurn 
-  
-
-  return ()
 
 
   
@@ -192,20 +223,7 @@ main = do
   conf <- mkConfig
   runStateT (runReaderT play conf) game
   
-    
-  _ <- getChar
-
-  
-  setSGR [SetColor Foreground Dull Blue]
-  setSGR [SetUnderlining  SingleUnderline]
-  putStr "Enter your name: "
-  setSGR [SetColor Foreground Dull Yellow]
-  hFlush stdout  -- flush the output buffer before getLine
-  name <- getLine
-  setSGR [SetColor Foreground Dull Blue]
-  putStrLn $ "Hello, " ++ name ++ "!"
-  setSGR [Reset]  -- reset to default colour scheme
-  
+  return ()
   
 
 

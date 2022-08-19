@@ -3,6 +3,8 @@ module DataTypes where
 
 import Control.Lens
 
+data Config = Config { screenSize :: (Int,Int) }
+
 data PColor = White | Black deriving (Show,Eq)
 data PState = Init | TwoStep | Moved deriving (Eq,Show)
 
@@ -43,5 +45,3 @@ data WorldState = WorldState { _board  :: Board
                              , _history :: [(Int, Board)] } deriving Show
 makeLenses ''WorldState
 
-                   
-data Config = Config { screenSize :: (Int,Int) }
