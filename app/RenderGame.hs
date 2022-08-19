@@ -162,6 +162,7 @@ renderGameOver = do
   then liftIO  $ renderLine ("Congratulations "++pwhite^.name++"!") ((div mrow 2)+2,(div mcol 2)-6)
   else liftIO  $ renderLine ("Congratulations "++pblack^.name++"!") ((div mrow 2)+2,(div mcol 2)-6)
   
+  liftIO $ setCursorPosition (mrow) (0)
 
 
 renderPoint :: Char -> (Int,Int) -> IO ()

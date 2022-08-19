@@ -11,6 +11,7 @@ import Control.Monad.State
 import System.Console.ANSI
 import Control.Concurrent
 import Control.Lens
+import System.Exit
 
 import Data.Maybe
 
@@ -210,6 +211,9 @@ play = forever $ do
   then do 
      liftIO $ threadDelay (2 * 10 ^ 6)
      renderGameOver
+    
+     liftIO $ threadDelay (3 * 10 ^ 6) 
+     lift $ lift $ exitSuccess
   else do 
      renderGame
      makeTurn 
