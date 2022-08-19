@@ -8,7 +8,9 @@ Project developed in the context of *Emurgo's Cardano Developer Associate Progra
 This is a simple chess terminal game that contains all basic chess rules including special moves: *Castling, Enpassant and pawn Promotion*. 
 (Pawns are promoted to Queen by default)
 
-Once the game is running the board is displayed on the terminal and you can use "wasd" to move the cursor to select the pieces and movement
+Once the game is running the board is displayed on the terminal and you can use "wasd" to move the cursor to select pieces and movement
+
+![Process](demo.png)
 
 ## Game Features
 
