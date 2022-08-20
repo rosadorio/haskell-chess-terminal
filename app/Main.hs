@@ -42,7 +42,7 @@ getMoves (Just pos) b  = case getPiece pos b of
 
 -- Update Player state: D -> Draw, R -> Resign, P -> Play
 updatePlayerState :: Player -> Char -> Player
-updatePlayerState (Player n t c st) 'D' = Player n t c Draw
+updatePlayerState (Player n t c st) 'D' = Player n t c Draw -- logic not implemented
 updatePlayerState (Player n t c st) 'R' = Player n t c Resign
 updatePlayerState (Player n t c st) 'P' = Player n t c Play
 updatePlayerState pl _ = pl
@@ -83,31 +83,33 @@ makeTurn = do
   if key == 'U' 
   then stepbackBoard
   else return ()
+ 
   
-    
-  let currPos = game^.cursor^.position
-      currSel = game^.cursor^.selected
+  -- option to change player state: Play, Draw, Resign
+  if player == game^.whitePlayer^.col
+  then
+     whitePlayer .= updatePlayerState (game^.whitePlayer) key
+  else
+     blackPlayer .= updatePlayerState (game^.blackPlayer) key
+  
+
+  let currPos = game^.cursor^.position  -- current Position
+      currSel = game^.cursor^.selected  -- current Selection
       --
-      newSel  = selectPos currSel newPos key
-      newPos  = movePos currPos key
+      newSel  = selectPos currSel newPos key -- update selection
+      newPos  = movePos currPos key          -- update position
       --
       possMov = getMoves newSel board
       -- default new cursor
       newcursor = Cursor newPos newSel possMov 
  
-  if isNothing currSel 
-  then selectPiece newSel newcursor
-  else selectMove currSel newSel newcursor board   -- when piece is selected          
+ 
+  if isNothing currSel then 
+     selectPiece newSel newcursor
+  else 
+     selectMove currSel newSel newcursor board   -- when piece is selected          
 
   
-  -- option to change player state: Play, Draw, Resign
-  if player == game^.whitePlayer^.col
-  then do 
-     let upPl = updatePlayerState (game^.whitePlayer) key
-     whitePlayer .= upPl
-  else do
-    let upPl = updatePlayerState (game^.blackPlayer) key
-    blackPlayer .= upPl
     
 selectPiece :: (MonadState WorldState m) => Maybe Pos -> Cursor -> m ()
 selectPiece newSel newcursor = do
@@ -154,7 +156,7 @@ makemove to = do
   if isCheck player newBoard then
     message .= "invalid move! You are putting your King in Check-Mate"
   else do
-    -- update board (with change Pawns in TwoStep State -> Moved) 
+    -- update board (for Enpassant: change Pawns in TwoStep State -> Moved) 
     board  .= setTwoStepMoved (other player) newBoard 
     cursor .= Cursor to Nothing []  -- reset cursor sel
     current %= other                -- change turn
@@ -168,11 +170,15 @@ makemove to = do
   
   
 
-startGame :: IO WorldState
-startGame = do
+startGame :: Config -> IO WorldState
+startGame conf = do
   clearScreen  
+
+  let (mrow,mcol) = screenSize conf                  -- terminal bounds 
+  liftIO $ forM_ (zip (repeat 0) [0 .. mcol]) (renderPoint '─')
+  liftIO $ setCursorPosition 0 ((div mcol 2)-18)
+  liftIO $ putStrLn " Haskell Terminal Chess Game "
   
-  putStrLn "\n----- Welcome to Haskell Chess Game -----"
   putStrLn ""
   setSGR [SetColor Foreground Vivid System.Console.ANSI.White]
   putStrLn "Enter white player name: "  
@@ -223,8 +229,8 @@ play = forever $ do
 main :: IO ()
 main = do
   noBuffering
-  game <- startGame
   conf <- mkConfig
+  game <- startGame conf
   runStateT (runReaderT play conf) game
   
   return ()

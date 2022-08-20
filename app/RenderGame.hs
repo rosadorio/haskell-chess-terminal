@@ -26,7 +26,7 @@ renderGame = do
 --  liftIO $ setSGR [Reset]
   -- Header
   liftIO $ clearScreen
-  liftIO $ forM_ (zip (repeat 0) [0 .. mcol]) (renderPoint '-')
+  liftIO $ forM_ (zip (repeat 0) [0 .. mcol]) (renderPoint '─')
   liftIO $ setCursorPosition 0 ((div mcol 2)-18)
   liftIO $ putStrLn " Haskell Terminal Chess Game "
 
@@ -98,9 +98,9 @@ renderGame = do
                Right p  -> (show(p^.ptype)++" "++show(p^.pcolor))      
               
       spm = if isEnpassant pieceSel selPos newPos board --
-              then ". EnPassant! Pawn's Special Move"
+              then "-> EnPassant! Pawn's Special Move"
             else if isCastling pieceSel selPos newPos board
-                   then ". Castling! King's Special move"
+                   then "-> Castling! King's Special move"
                    else ""  
       pieceSel = fromRight (Piece King DataTypes.White TwoStep) $getPiece (selPos) board
       newPos  = game^.cursor^.position     
@@ -164,6 +164,8 @@ renderGameOver = do
   
   liftIO $ setCursorPosition (mrow) (0)
   liftIO $ showCursor
+
+
 
 renderPoint :: Char -> (Int,Int) -> IO ()
 renderPoint c (row,col) = do

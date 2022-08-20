@@ -53,9 +53,9 @@ module GameLogic  where
 --                              3. King is not in Check
 --                              4. King can not pass through a square attacked by the enemy
 --
---              En Passsant: When a Pawn moves two squares and passes over a square attacked by enemy Pawn. If the Pawn is not immediatly captured it loses the right to EnPassant 
+--            En Passsant: When a Pawn moves two squares and passes over a square attacked by enemy Pawn. If the Pawn is not immediatly captured it loses the right to EnPassant 
 --                     
---              Promotion  : Once a Pawn reaches rank 8 it can be promoted to any Piece desired (defaulted to Queen)
+--            Promotion  : Once a Pawn reaches rank 8 it can be promoted to any Piece desired (defaulted to Queen)
 --
 --
 --
@@ -70,7 +70,8 @@ module GameLogic  where
 --   Game Over:
 --      1. King is captured 
 --      2. Player resigns 
---      3. Draw is declared
+--      3. Draw is declared (not implemented)
+--      4. Player runs out of time (not implemented)
 --
 --
 ---------------------------------------------------------------------------------
@@ -81,7 +82,7 @@ import Data.Either
 import Control.Lens
 
 
--- initialize game
+-- initialial game state
 initGame :: String -> String -> Float -> WorldState  --change last parameter
 initGame p1 p2 t = WorldState board cursor white black White msg [(0,board)]
     where
@@ -100,42 +101,16 @@ initGame p1 p2 t = WorldState board cursor white black White msg [(0,board)]
 
 
 
-
--- move piece: delete piece from curr position and add piece to new position
--- update piece state before setting piece
-movePiece :: Pos -> Pos -> Board -> Board
-movePiece from to b
-  | isEnpassant p from to b = doEnpassant
-  | isCastling  p from to b = doCastling
-  | isPromotion from to b   = doPromotion
-  | otherwise               = move pUp from to b
-  where  doEnpassant = let (r0,c0) = from; (r1,c1) = to 
-                       in  move pUp from to $ deletePiece (r0,c1) b 
-         doCastling  = let (rfrom,rto) = castlingRookMove (from,to)
-                           rook = case getPiece rfrom b of
-                                    Right rk  -> updatePState rfrom rto rk
-                                    Left  m   -> p -- should never happen if isCastling
-                       in move pUp from to $ move rook rfrom rto b
-         doPromotion = let pp = promotePiece pUp Queen in move pp from to b              
-         pUp  = updatePState from to p 
-         p    = case getPiece from b of
-                  Right p  -> p
-                  Left m   -> error "should never try to move piece that doesnt exist"
-         move p from to b  = setPiece p to $ deletePiece from $ deletePiece to b
-
-
-
-
 ------ Helper Functions -------
 
 -- getPiece: from position get piece
 getPiece :: Pos -> Board -> Either String Piece
-getPiece p b
+getPiece from b
   | np == 0     = Left "no piece in this position"
   | np == 1     = Right $ _piece $ head findPiece
   | otherwise   = Left "more than one piece in the same position"
   where np = length findPiece
-        findPiece = filter (\s -> s^.pos == p) b
+        findPiece = filter (\s -> s^.pos == from) b
 --
 -- setPiece: add (pos piece) to Board 
 setPiece :: Piece -> Pos -> Board -> Board
@@ -173,10 +148,37 @@ updatePState from to p = if (p^.ptype == Pawn && distance from to == 2)
                    
 ----- RESET PAWNS TWO STATE TO MOVED---------------------
 setTwoStepMoved :: PColor -> Board -> Board
-setTwoStepMoved color board =  map f board 
-  where f sq = if sq^.piece^.pcolor == color && sq^.piece^.pstate == TwoStep then  
-                    Square (sq^.pos) (Piece Pawn color Moved)        
-               else sq                    
+setTwoStepMoved color board =  map setToMoved board 
+  where 
+    setToMoved sq = if (sq^.piece^.pcolor == color) && (sq^.piece^.pstate == TwoStep) then  
+                       Square (sq^.pos) (Piece Pawn color Moved)        
+                    else sq   
+
+
+
+
+-- move piece: delete piece from curr position and add piece to new position
+-- update piece state before setting piece
+movePiece :: Pos -> Pos -> Board -> Board
+movePiece from to b
+  | isEnpassant p from to b   = doEnpassant
+  | isCastling  p from to b   = doCastling
+  | isPromotion from to b     = doPromotion
+  | otherwise                 = move pUp from to b
+  where  
+     doEnpassant = let (r0,c0) = from; (r1,c1) = to 
+                   in  move pUp from to $ deletePiece (r0,c1) b 
+     doCastling  = let (rfrom,rto) = castlingRookMove (from,to)
+                       rook = case getPiece rfrom b of
+                                Right rk  -> updatePState rfrom rto rk
+                                Left  m   -> p -- should never happen if isCastling =True
+                   in move pUp from to $ move rook rfrom rto b
+     doPromotion = let pp = promotePiece pUp Queen in move pp from to b              
+     pUp  = updatePState from to p 
+     p    = case getPiece from b of
+                Right p  -> p
+                Left m   -> error "try to move piece that doesnt exist?" 
+     move p from to b  = setPiece p to $ deletePiece from $ deletePiece to b             
 
 
 
