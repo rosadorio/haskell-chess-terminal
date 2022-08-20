@@ -219,5 +219,5 @@ getChessChar pos b = let
                             DataTypes.White  -> '♟' 
                             DataTypes.Black  -> '♙'
   in case getPiece pos b of
-       Left m   -> "."
+       Left m   ->"_"
        Right p  ->  symbol p:[]

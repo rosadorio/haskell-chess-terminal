@@ -110,7 +110,7 @@ makeTurn = do
      selectMove currSel newSel newcursor board   -- when piece is selected          
 
   
-    
+-- Logic to Select Piece   
 selectPiece :: (MonadState WorldState m) => Maybe Pos -> Cursor -> m ()
 selectPiece newSel newcursor = do
   board   <- use board
@@ -130,6 +130,7 @@ selectPiece newSel newcursor = do
                      else 
                         message .= "invalid selection! it is "++show(player)++"'s turn"                             
 
+-- Logic to Select Movement
 selectMove :: (MonadState WorldState m) => Maybe Pos -> Maybe Pos -> Cursor -> Board -> m ()
 selectMove currSel newSel newcursor board
   | isNothing newSel     = do cursor .= newcursor >> message .= "select piece"
