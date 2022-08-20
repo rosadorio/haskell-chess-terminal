@@ -26,14 +26,19 @@ Short list of features included on current release:
 2. Add time limit per turn 
 
 # Getting Started 
-Repo contains all the necessary sources to build and run it on your terminal 
+Repo contains all the necessary sources to build and run it on your terminal. To build it, it is necessary to have cabal installed in your system
 
-Instructions assuming cabal is installed:
-1. git clone git@github.com:rosadorio/haskell-chess-terminal.git
-2. cd haskell-chess-terminar
-3. cabal update && cabal install --only-dependencies
-4. cabal build
-5. cabal run
+Instruction to build and run game:
+
+ `git clone git@github.com:rosadorio/haskell-chess-terminal.git`
+
+ `cd haskell-chess-terminar`
+
+ `cabal update && cabal install --only-dependencies`
+ 
+ `cabal build`
+ 
+ `cabal run`
 
 
 
