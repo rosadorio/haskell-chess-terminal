@@ -1,6 +1,5 @@
 # haskell-chess-terminal-game
 
-
 Project developed in the context of *Emurgo's Cardano Developer Associate Programme*. This is my final project of the *Haskell Programming* module that aims at demonstrating haskell basic profeciency
 
 # Intro
@@ -14,13 +13,17 @@ Once the game is running the board is displayed on the terminal and you can use 
 
 ## Game Features
 
-Short list of features included:
+Short list of features included on current release:
 1. When piece selected it highlights its possible moves
 2. When in check the King is highlighted
 3. Check-mate is declared and the game terminates when there is no possible move to take the king out of check 
 4. Option to resign
 5. Option to rewind to previous turn 
 
+
+## Future Evolution
+1. Adding option to propose draw
+2. Add time limit per turn 
 
 # Getting Started 
 Repo contains all the necessary sources to build and run it on your terminal 
