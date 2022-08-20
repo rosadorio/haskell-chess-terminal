@@ -26,9 +26,11 @@ Short list of features included:
 Repo contains all the necessary sources to build and run it on your terminal 
 
 Instructions assuming cabal is installed:
-1. Clone repo
-3. Run: `cabal update && cabal install --only-dependencies`
-4. Run: `cabal run`
+1. git clone git@github.com:rosadorio/haskell-chess-terminal.git
+2. cd haskell-chess-terminar
+3. cabal update && cabal install --only-dependencies
+4. cabal build
+5. cabal run
 
 
 
