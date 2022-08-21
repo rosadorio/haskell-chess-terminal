@@ -94,7 +94,7 @@ initGame p1 p2 t = WorldState board cursor white black White msg [(0,board)]
            | x == 6    = Piece Pawn White Init
            | x == 7    = Piece (pSeq !! y) White Init
       board = [Square (x,y) (init x y) | x <- [0,1,6,7], y <- [0..7]]
-      cursor = Cursor (0,0) Nothing []
+      cursor = Cursor (7,0) Nothing []
       white = Player p1 t White Play
       black = Player p2 t Black Play
       msg = "game initialized"
@@ -155,8 +155,6 @@ setTwoStepMoved color board =  map setToMoved board
                     else sq   
 
 
-
-
 -- move piece: delete piece from curr position and add piece to new position
 -- update piece state before setting piece
 movePiece :: Pos -> Pos -> Board -> Board
@@ -203,6 +201,7 @@ isCastling p from to b = _ptype p == King             -- piece King
                       && d == 2 && fst from == fst to -- 2 squares same row
                       && isRookAvail                  -- Rook is available
                       && isPathClear p from to b      -- king has clear path
+                      && not (isCheck color b)        -- player is not in check
                       && not(isPathAttacked color from to b)-- king path NOT attacked
                       && isPathClear p rFrom rTo b    -- rook has clear path
   where color = _pcolor p
@@ -319,16 +318,21 @@ isValidMove (Piece Pawn Black _ ) from to = isBForward from to
 -- valid move auxliary functions
 isStraight :: Pos -> Pos -> Bool
 isStraight (x0,y0) (x1,y1) = x1-x0 == 0 || y1-y0 == 0
+
 isDiagonal :: Pos -> Pos -> Bool
 isDiagonal (x0,y0) (x1,y1) = abs(x1-x0) == abs(y1-y0)
+
 isL :: Pos -> Pos -> Bool
 isL (x0,y0) (x1,y1) = (abs(x1-x0),abs(y1-y0)) == (1,2) ||
                       (abs(x1-x0),abs(y1-y0)) == (2,1)
+                      
 isVertical :: Pos -> Pos -> Bool
 isVertical (x0,y0) (x1,y1) = (y1-y0) == 0
+
 isWForward :: Pos -> Pos -> Bool
 isWForward (x0,y0) (x1,y1)  = isVertical (x0,y0) (x1,y1) &&
                           (x0-x1 == 1 ||(x0 == 6 && x0-x1 == 2)) 
+                          
 isBForward  :: Pos -> Pos -> Bool
 isBForward (x0,y0) (x1,y1)  = isVertical (x0,y0) (x1,y1) &&
                           (x1-x0 == 1 ||(x0 == 1 && x1-x0 == 2))
@@ -354,6 +358,8 @@ getKingPos :: PColor -> Board -> Pos
 getKingPos col b  = _pos king where
    king = head $ filter (\sq -> (sq^.piece^.ptype == King)  
                      && (sq^.piece^.pcolor == col)) b   
+                     
+                     
 
 -------------CHECK MATE-------------------------------------------
 

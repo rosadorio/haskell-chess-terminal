@@ -102,7 +102,7 @@ renderGame = do
             else if isCastling pieceSel selPos newPos board
                    then "-> Castling! King's Special move"
                    else ""  
-      pieceSel = fromRight (Piece King DataTypes.White TwoStep) $getPiece (selPos) board
+      pieceSel = fromRight (Piece King DataTypes.White TwoStep) $ getPiece (selPos) board
       newPos  = game^.cursor^.position     
       selPos  = case game ^. cursor ^. selected of   
                     Nothing  -> ((-1),(-1)) -- pos out of board bounds
@@ -133,14 +133,12 @@ renderGame = do
   
   liftIO $ mapM_ renderGap allpos   
 
-
-  
   -- show cursor in position
   let (rc,cc) = game^.cursor^.position
   liftIO $ setCursorPosition (brow+rc) (bcol+cc*2)
-
   
   return ()
+
 
 renderGameOver :: (MonadIO m, MonadReader Config m, MonadState WorldState m) => m ()
 renderGameOver = do
