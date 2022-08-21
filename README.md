@@ -2,6 +2,12 @@
 
 Project developed in the context of *Emurgo's Cardano Developer Associate Programme*. This is my final project of the *Haskell Programming* module that aims at demonstrating haskell basic profeciency
 
+
+Bellow you can find a video with the official presentation of the project. It became a bit more extensive than I intended (sorry for that)
+
+[![Haskell Chess Presentation Video](https://img.youtube.com/vi/sClJghPKrms/0.jpg)](https://www.youtube.com/watch?v=sClJghPKrms)
+
+
 ## Chess Game Rules
 
 - Board with 8 x 8 dimensions 
@@ -98,6 +104,7 @@ Repo contains all the necessary sources to build and run it on your terminal. To
  cabal build
  cabal run
  ```
+
 
 
 
